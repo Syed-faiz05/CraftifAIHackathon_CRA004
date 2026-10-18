@@ -1,0 +1,61 @@
+# Generated videos and analytics outputs
+output/*.mp4
+output/*.log
+output/*.csv
+output/latest-detections.json
+
+# TensorRT engines and model weights
+*.plan
+*.engine
+*.onnx
+*.pt
+*.pth
+*.weights
+
+# Python environments and caches
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+
+# Secrets and local environment files
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*credentials*
+
+# Logs and temporary files
+*.log
+*.tmp
+
+# IDE and OS files
+.vscode/
+.idea/
+.DS_Store
+
+# Runtime state and process files
+*.pid
+*.lock
+dashboard.log
+.run_output.txt
+
+# Backup and temporary versions
+*.backup
+*.backup-*
+*.before-*
+*.pre-*
+*.working-backup
+*.pipegen-cpu-safe
+
+# Generated images and frame captures
+output/*.jpg
+output/frames/
+
+# Compiled DeepStream binaries and libraries
+output/deepstream-analytics-app
+output/deepstream-analytics-overlay-app
+analytics-overlay-source/build-vehicle-counts/deepstream-analytics-vehicle-test
+analytics-overlay-source/build-vehicle-counts/deepstream-analytics-vehicle-json-test
+build/*.so

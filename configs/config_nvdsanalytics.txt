@@ -1,0 +1,13 @@
+[property]
+enable=1
+config-width=1920
+config-height=1080
+osd-mode=2
+display-font-size=16
+
+[line-crossing-stream-0]
+enable=1
+line-crossing-Exit=789;672;1084;900;851;773;1203;732
+class-id=3
+extended=0
+mode=loose
