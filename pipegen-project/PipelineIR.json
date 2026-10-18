@@ -1,0 +1,355 @@
+{
+  "loop": {
+    "next_file": null,
+    "next_task": null,
+    "projectTree": {},
+    "target_function": {
+      "name": "read_file",
+      "parameters": {}
+    },
+    "visited_steps": [
+      "/home/goldie/.pipegen/syedfaiz052004/a39a16f8-0588-477e-b379-6e4d94e95a72/src1/VehicleDetection",
+      "/home/goldie/.pipegen/syedfaiz052004/a39a16f8-0588-477e-b379-6e4d94e95a72/src1/VehicleDetection/application.py",
+      "/home/goldie/.pipegen/syedfaiz052004/a39a16f8-0588-477e-b379-6e4d94e95a72/src1/VehicleDetection/model/yolo11s.onnx"
+    ]
+  },
+  "pipeline_ir": {
+    "connections": [
+      [
+        "p01o_frame",
+        "p02i_frame"
+      ],
+      [
+        "p01o_frame",
+        "p05i_frame"
+      ],
+      [
+        "p02o_blob",
+        "p03i_blob"
+      ],
+      [
+        "p02o_geometry",
+        "p04i_geometry"
+      ],
+      [
+        "p03o_output0",
+        "p04i_output0"
+      ],
+      [
+        "p04o_detections",
+        "p05i_detections"
+      ]
+    ],
+    "nodes": [
+      {
+        "description": "Read every video frame without seeking or skipping.",
+        "id": 1,
+        "name": "file",
+        "ports": [
+          {
+            "direction": "output",
+            "format": {
+              "color": "BGR",
+              "encoding": "raw"
+            },
+            "framerate": {
+              "denominator": 1,
+              "numerator": 25
+            },
+            "id": "p01o_frame",
+            "tensor": {
+              "dtype": "uint8",
+              "shape": [
+                1080,
+                1920,
+                3
+              ]
+            }
+          }
+        ],
+        "pseudo_code": "import cv2\ncap = cv2.VideoCapture('/home/goldie/traffic-data/traffic.mp4')\nif not cap.isOpened():\n    raise IOError('Could not open input video')\ntry:\n    while True:\n        ok, frame = cap.read()\n        if not ok:\n            break\n        yield frame\nfinally:\n    cap.release()",
+        "resolution": [
+          1920,
+          1080
+        ],
+        "type": "input",
+        "url": "file:///home/goldie/traffic-data/traffic.mp4"
+      },
+      {
+        "color_order": "RGB",
+        "description": "Letterbox frames, convert to RGB, and scale pixels.",
+        "id": 2,
+        "mean": null,
+        "normalization": 0.00392156862745098,
+        "offset": null,
+        "pad_value": 114,
+        "ports": [
+          {
+            "direction": "input",
+            "format": {
+              "color": "BGR",
+              "encoding": "raw"
+            },
+            "framerate": {
+              "denominator": 1,
+              "numerator": 25
+            },
+            "id": "p02i_frame",
+            "tensor": {
+              "dtype": "uint8",
+              "shape": [
+                1080,
+                1920,
+                3
+              ]
+            }
+          },
+          {
+            "direction": "output",
+            "format": {
+              "color": "RGB",
+              "encoding": "raw"
+            },
+            "framerate": {
+              "denominator": 1,
+              "numerator": 25
+            },
+            "id": "p02o_blob",
+            "tensor": {
+              "dtype": "fp32",
+              "shape": [
+                1,
+                3,
+                640,
+                640
+              ]
+            }
+          },
+          {
+            "direction": "output",
+            "format": {
+              "color": null,
+              "encoding": null
+            },
+            "framerate": {
+              "denominator": 1,
+              "numerator": 25
+            },
+            "id": "p02o_geometry",
+            "tensor": {
+              "dtype": null,
+              "shape": null
+            }
+          }
+        ],
+        "pseudo_code": "import cv2\nimport numpy as np\n\ndef process(frame):\n    orig_h, orig_w = frame.shape[:2]\n    input_h, input_w = 640, 640\n    r = min(input_h / orig_h, input_w / orig_w)\n    new_w, new_h = round(orig_w * r), round(orig_h * r)\n    resized = cv2.resize(frame, (new_w, new_h), interpolation=cv2.INTER_LINEAR)\n    canvas = np.full((input_h, input_w, 3), 114, dtype=np.uint8)\n    pad_x, pad_y = (input_w - new_w) // 2, (input_h - new_h) // 2\n    canvas[pad_y:pad_y + new_h, pad_x:pad_x + new_w] = resized\n    blob = cv2.cvtColor(canvas, cv2.COLOR_BGR2RGB).astype(np.float32) / 255.0\n    blob = np.transpose(blob, (2, 0, 1))[None]\n    geometry = {'orig_h': orig_h, 'orig_w': orig_w, 'ratio': r, 'pad_x': pad_x, 'pad_y': pad_y}\n    return np.ascontiguousarray(blob), geometry",
+        "resize": [
+          640,
+          640
+        ],
+        "resize_mode": "letterbox",
+        "scale": 0.00392156862745098,
+        "std": null,
+        "type": "preprocess"
+      },
+      {
+        "batchSize": 1,
+        "description": "Run YOLO11s inference independently on each prepared frame.",
+        "id": 3,
+        "layout": "NCHW",
+        "model": {
+          "inputs": [
+            {
+              "dtype": "fp32",
+              "name": "images",
+              "shape": [
+                1,
+                3,
+                640,
+                640
+              ]
+            }
+          ],
+          "name": "YOLO11s COCO detection",
+          "outputs": [
+            {
+              "dtype": "fp32",
+              "name": "output0",
+              "shape": [
+                1,
+                84,
+                8400
+              ]
+            }
+          ],
+          "parameter_count": 9485791,
+          "type": "engine",
+          "url": "/home/goldie/.pipegen/syedfaiz052004/a39a16f8-0588-477e-b379-6e4d94e95a72/model_stage/yolo11s.fp16.plan",
+          "source_onnx": "/home/goldie/.pipegen/syedfaiz052004/a39a16f8-0588-477e-b379-6e4d94e95a72/src1/VehicleDetection/model/yolo11s.onnx"
+        },
+        "ports": [
+          {
+            "direction": "input",
+            "format": {
+              "color": "RGB",
+              "encoding": "raw"
+            },
+            "framerate": {
+              "denominator": 1,
+              "numerator": 25
+            },
+            "id": "p03i_blob",
+            "tensor": {
+              "dtype": "fp32",
+              "shape": [
+                1,
+                3,
+                640,
+                640
+              ]
+            }
+          },
+          {
+            "direction": "output",
+            "format": {
+              "color": null,
+              "encoding": null
+            },
+            "framerate": {
+              "denominator": 1,
+              "numerator": 25
+            },
+            "id": "p03o_output0",
+            "tensor": {
+              "dtype": "fp32",
+              "shape": [
+                1,
+                84,
+                8400
+              ]
+            }
+          }
+        ],
+        "pseudo_code": "import onnxruntime as ort\nsession = ort.InferenceSession('/home/goldie/.pipegen/syedfaiz052004/a39a16f8-0588-477e-b379-6e4d94e95a72/src1/VehicleDetection/model/yolo11s.onnx', providers=ort.get_available_providers())\n\ndef process(blob):\n    return session.run(['output0'], {'images': blob})[0]",
+        "type": "inference"
+      },
+      {
+        "description": "Decode boxes, suppress overlaps, and retain supported road users.",
+        "id": 4,
+        "label_file_path": null,
+        "num_classes": 80,
+        "ports": [
+          {
+            "direction": "input",
+            "format": {
+              "color": null,
+              "encoding": null
+            },
+            "framerate": {
+              "denominator": 1,
+              "numerator": 25
+            },
+            "id": "p04i_output0",
+            "tensor": {
+              "dtype": "fp32",
+              "shape": [
+                1,
+                84,
+                8400
+              ]
+            }
+          },
+          {
+            "direction": "input",
+            "format": {
+              "color": null,
+              "encoding": null
+            },
+            "framerate": {
+              "denominator": 1,
+              "numerator": 25
+            },
+            "id": "p04i_geometry",
+            "tensor": {
+              "dtype": null,
+              "shape": null
+            }
+          },
+          {
+            "direction": "output",
+            "format": {
+              "color": null,
+              "encoding": null
+            },
+            "framerate": {
+              "denominator": 1,
+              "numerator": 25
+            },
+            "id": "p04o_detections",
+            "tensor": {
+              "dtype": null,
+              "shape": null
+            }
+          }
+        ],
+        "pseudo_code": "import cv2\nimport numpy as np\n\n# COCO IDs supported for the requested road-user target.\nROAD_USER_NAMES = {0: 'person', 1: 'bicycle', 2: 'car', 3: 'motorcycle', 5: 'bus', 7: 'truck'}\n\ndef process(output0, geometry):\n    confidence_threshold, nms_threshold = 0.5, 0.45\n    preds = np.squeeze(output0, 0).T  # [1,84,8400] -> [8400,84]\n    boxes_xywh, scores = preds[:, :4], preds[:, 4:]\n    class_ids = np.argmax(scores, axis=1)\n    confidences = scores[np.arange(scores.shape[0]), class_ids]\n    keep = confidences >= confidence_threshold\n    boxes_xywh = boxes_xywh[keep]\n    confidences = confidences[keep]\n    class_ids = class_ids[keep]\n    if len(boxes_xywh) == 0:\n        return []\n    cx, cy, w, h = boxes_xywh.T\n    ratio, pad_x, pad_y = geometry['ratio'], geometry['pad_x'], geometry['pad_y']\n    orig_w, orig_h = geometry['orig_w'], geometry['orig_h']\n    x1 = np.clip((cx - w / 2 - pad_x) / ratio, 0, orig_w)\n    y1 = np.clip((cy - h / 2 - pad_y) / ratio, 0, orig_h)\n    x2 = np.clip((cx + w / 2 - pad_x) / ratio, 0, orig_w)\n    y2 = np.clip((cy + h / 2 - pad_y) / ratio, 0, orig_h)\n    dets = []\n    for c in np.unique(class_ids):\n        idxs = np.where(class_ids == c)[0]\n        rects = np.stack([x1[idxs], y1[idxs], (x2 - x1)[idxs], (y2 - y1)[idxs]], axis=1)\n        keep_idx = cv2.dnn.NMSBoxes(rects.tolist(), confidences[idxs].tolist(), confidence_threshold, nms_threshold)\n        keep_idx = np.array(keep_idx).flatten() if len(keep_idx) else []\n        for i in keep_idx:\n            oi = idxs[i]\n            class_id = int(class_ids[oi])\n            if class_id in ROAD_USER_NAMES:\n                dets.append({'box': [float(x1[oi]), float(y1[oi]), float(x2[oi]), float(y2[oi])], 'score': float(confidences[oi]), 'class': class_id, 'label': ROAD_USER_NAMES[class_id]})\n    return dets",
+        "task": "detection",
+        "threshold": 0.5,
+        "top_items": null,
+        "type": "postprocess"
+      },
+      {
+        "description": "Annotate supported detections and save every video frame.",
+        "grid": null,
+        "id": 5,
+        "name": "file",
+        "output_type": "single",
+        "ports": [
+          {
+            "direction": "input",
+            "format": {
+              "color": "BGR",
+              "encoding": "raw"
+            },
+            "framerate": {
+              "denominator": 1,
+              "numerator": 25
+            },
+            "id": "p05i_frame",
+            "tensor": {
+              "dtype": "uint8",
+              "shape": [
+                1080,
+                1920,
+                3
+              ]
+            }
+          },
+          {
+            "direction": "input",
+            "format": {
+              "color": null,
+              "encoding": null
+            },
+            "framerate": {
+              "denominator": 1,
+              "numerator": 25
+            },
+            "id": "p05i_detections",
+            "tensor": {
+              "dtype": null,
+              "shape": null
+            }
+          }
+        ],
+        "pseudo_code": "import os\nimport cv2\n\npath = '/home/goldie/.pipegen/syedfaiz052004/a39a16f8-0588-477e-b379-6e4d94e95a72/output/output.mp4'\nos.makedirs(os.path.dirname(path), exist_ok=True)\nwriter = None\n\ndef process(frame, detections):\n    global writer\n    image = frame.copy()\n    h, w = image.shape[:2]\n    scale = max(w, h) / 1400\n    box_thick = max(2, int(4 * scale))\n    label_scale = max(0.9, 1.2 * scale)\n    label_thick = max(2, int(3 * scale))\n    for det in detections:\n        x1, y1, x2, y2 = map(int, det['box'])\n        label = f\"{det['label']} {det['score']:.2f}\"\n        color = (0, 200, 0)\n        cv2.rectangle(image, (x1, y1), (x2, y2), color, box_thick)\n        (tw, th), baseline = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, label_scale, label_thick)\n        label_y = max(y1, th + baseline + 8)\n        cv2.rectangle(image, (x1, label_y - th - baseline - 8), (x1 + tw + 12, label_y), color, -1)\n        cv2.putText(image, label, (x1 + 6, label_y - baseline - 3), cv2.FONT_HERSHEY_SIMPLEX, label_scale, (0, 0, 0), label_thick, cv2.LINE_AA)\n    if writer is None:\n        writer = cv2.VideoWriter(path, cv2.VideoWriter_fourcc(*'mp4v'), 25.0, (w, h))\n        if not writer.isOpened():\n            raise IOError('Could not open output video')\n    writer.write(image)\n\ndef close():\n    global writer\n    if writer is not None:\n        writer.release()\n        writer = None",
+        "resolution": [
+          1920,
+          1080
+        ],
+        "type": "output",
+        "url": "file:///home/goldie/.pipegen/syedfaiz052004/a39a16f8-0588-477e-b379-6e4d94e95a72/output/output.mp4"
+      }
+    ]
+  }
+}

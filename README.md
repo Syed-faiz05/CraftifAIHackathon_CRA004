@@ -50,3 +50,8 @@ Latest-frame detection counts describe one processed frame. The cumulative motor
 
 ## Current Test Results
 The validated sample run reported 5 cars and 2 motorcycles in its latest frame, with 3 motorcycle line crossings. These are sample-run results, not guaranteed results for other videos.
+
+## Actual PipeGen Pipeline IR Graph
+
+
+See [PIPELINE_IR_GRAPH.md](pipegen-project/PIPELINE_IR_GRAPH.md) for the graph generated from `PipelineIR.json`.
