@@ -59,3 +59,6 @@ output/deepstream-analytics-overlay-app
 analytics-overlay-source/build-vehicle-counts/deepstream-analytics-vehicle-test
 analytics-overlay-source/build-vehicle-counts/deepstream-analytics-vehicle-json-test
 build/*.so
+
+# Ignore local backup configs
+configs/*.backup.txt
